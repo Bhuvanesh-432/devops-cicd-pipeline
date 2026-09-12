@@ -1,0 +1,56 @@
+---
+- name: Configure DevOps Server
+  hosts: devops_server
+  become: true
+
+  tasks:
+
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - git
+          - curl
+          - wget
+          - unzip
+          - docker.io
+          - openjdk-21-jdk
+          - maven
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: true
+
+    - name: Verify Java installation
+      command: java -version
+      register: java_version
+      changed_when: false
+
+    - name: Verify Maven installation
+      command: mvn -version
+      register: maven_version
+      changed_when: false
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Display installed versions
+      debug:
+        msg:
+          - "{{ java_version.stderr }}"
+          - "{{ maven_version.stdout_lines }}"
+          - "{{ docker_version.stdout }}"
